@@ -791,87 +791,27 @@ body {
     left: 50%;
     bottom: 30%;
   }
-    /* مودال نقشه در حالت افقی */
-    #mapModal .modal-box {
-    position: fixed !important;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    max-width: 95vw !important;
-    max-height: 85vh !important;
-    width: 90vw !important;
-    height: 85vh !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: 0 !important;
-    background: rgba(0, 0, 0, 0.95) !important;
-    border: 3px solid rgba(255,255,255,0.1) !important;
-  }
-  
-  #mapModal .map-box {
-    width: 100% !important;
-    height: 100% !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: 20px !important;
-    margin: 0 !important;
-  }
-  
-  .map-large {
-    width: 100% !important;
-    height: 100% !important;
-    max-width: 100% !important;
-    max-height: 100% !important;
-    object-fit: contain !important;
-    display: block !important;
-    margin: 0 auto !important;
-  }
-  
-  /* دکمه بستن نقشه در حالت افقی */
-  .map-close {
-    position: fixed !important;
-    top: 15px !important;
-    left: 15px !important;
-    z-index: 1000 !important;
-    background: rgba(0, 0, 0, 0.9) !important;
-    color: white !important;
-    border: 2px solid rgba(255,255,255,0.3) !important;
-    width: 40px !important;
-    height: 40px !important;
-    font-size: 20px !important;
-    border-radius: 50% !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    cursor: pointer !important;
-  }
+  .modal-box {
+    position: relative !important;
+    z-index: 600 !important;
+    background: #0b1220;
+    padding: 18px;
+    border-radius: 12px;
+    min-width: 260px;
+    color: #fff;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.6);
+    transform: scale(.8);
+    LEFT: 50%;
+    bottom: 30%;
+    transition: transform .28s 
+ease;}
+   
   
   .map-close:hover {
     background: rgba(0, 0, 0, 1) !important;
   }
   
-  /* اگر نیاز به اضافه کردن دکمه بستن در HTML نیست، این رو اضافه کن */
-  #mapModal .modal-box::before {
-    content: '✕' !important;
-    position: absolute !important;
-    top: 15px !important;
-    left: 15px !important;
-    z-index: 1000 !important;
-    background: rgba(0, 0, 0, 0.9) !important;
-    color: white !important;
-    border: 2px solid rgba(255,255,255,0.3) !important;
-    width: 40px !important;
-    height: 40px !important;
-    font-size: 20px !important;
-    border-radius: 50% !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    cursor: pointer !important;
-  }
-}
+
   /* LED ها در حالت افقی */
   .led {
     width: 30px !important;
@@ -1169,6 +1109,24 @@ body {
 
 <body>
   <main class="game-root">
+
+      <!-- مودال محافظ -->
+  <div class="modal" id="protectorModal" aria-hidden="true">
+    <div class="modal-backdrop" id="modalBackdrop"></div>
+    <div class="modal-box" role="dialog" aria-modal="true" aria-label="تنظیم محافظ">
+      <div class="protector-ui">
+        <div class="protector-title">TS</div>
+        <div class="protector-value" id="protectorValue">S300</div>
+        <div class="protector-controls">
+          <button id="protUp" class="ctrl" aria-label="افزایش زمان">▲</button>
+          <button id="protSet" class="ctrl" aria-label="تنظیم">SET</button>
+          <button id="protDown" class="ctrl" aria-label="کاهش زمان">▼</button>
+        </div>
+        <div class="prot-close" id="protClose" role="button" tabindex="0">بستن</div>
+      </div>
+    </div>
+  </div>
+  
     <!-- پس‌زمینه پنل -->
     <div class="panel-wrap">
       <img src="assets/BOARD.png" alt="پنل" class="panel-bg" id="panelBg">
@@ -1246,22 +1204,7 @@ body {
     </div>
   </main>
 
-  <!-- مودال محافظ -->
-  <div class="modal" id="protectorModal" aria-hidden="true">
-    <div class="modal-backdrop" id="modalBackdrop"></div>
-    <div class="modal-box" role="dialog" aria-modal="true" aria-label="تنظیم محافظ">
-      <div class="protector-ui">
-        <div class="protector-title">TS</div>
-        <div class="protector-value" id="protectorValue">S300</div>
-        <div class="protector-controls">
-          <button id="protUp" class="ctrl" aria-label="افزایش زمان">▲</button>
-          <button id="protSet" class="ctrl" aria-label="تنظیم">SET</button>
-          <button id="protDown" class="ctrl" aria-label="کاهش زمان">▼</button>
-        </div>
-        <div class="prot-close" id="protClose" role="button" tabindex="0">بستن</div>
-      </div>
-    </div>
-  </div>
+
 
  
 
@@ -1838,6 +1781,90 @@ if(state.stage === 5) {
         if(active && active.click) active.click();
       }
     });
+/* ---- مقیاس پنل ---- */
+function autoScalePanel() {
+    const panel = document.getElementById("panel");
+    const warning = document.getElementById("rotate-warning");
+
+    const realW = 1808;
+    const realH = 592;
+
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+
+    // اگر گوشی عمودی است
+    if (h > w) {
+        warning.style.display = "block";
+        panel.style.display = "none";
+        return;
+    }
+
+    warning.style.display = "none";
+    panel.style.display = "block";
+
+    const scale = Math.min(w / realW, h / realH);
+    panel.style.transform = `scale(${scale})`;
+}
+
+window.addEventListener("load", autoScalePanel);
+window.addEventListener("resize", autoScalePanel);
+
+/* ---- منطق مودال محافظ ---- */
+
+let protectorValue = 300;
+let protectorSetMode = false;
+
+const modal = document.getElementById("protectorModal");
+const valueBox = document.getElementById("ts-value");
+const btnSet = document.getElementById("btn-set");
+const btnUp = document.getElementById("btn-up");
+const btnDown = document.getElementById("btn-down");
+
+/* باز کردن مودال → حتماً از پنل جداست و 100٪ کار می‌کند */
+function openProtectorModal() {
+    modal.style.display = "flex";
+}
+
+function closeProtectorModal() {
+    modal.style.display = "none";
+}
+
+/* کلیک روی بیرون مودال → بسته شود */
+modal.addEventListener("click", (e) => {
+    if (e.target === modal) {
+        closeProtectorModal();
+    }
+});
+
+/* دکمه SET */
+btnSet.onclick = () => {
+    protectorSetMode = true;
+};
+
+/* دکمه بالا */
+btnUp.onclick = () => {
+    if (!protectorSetMode) return;
+
+    protectorValue++;
+    if (protectorValue > 500) protectorValue = 1;
+
+    valueBox.textContent = "S" + protectorValue;
+};
+
+/* دکمه پایین */
+btnDown.onclick = () => {
+    if (!protectorSetMode) return;
+
+    protectorValue--;
+    if (protectorValue < 1) protectorValue = 1;
+
+    valueBox.textContent = "S" + protectorValue;
+};
+
+/* نمونه → وقتی روی protector در پنل کلیک شود */
+document.getElementById("test-dot").onclick = () => {
+    openProtectorModal();
+};
 
     // مقدار اولیه محافظ
     updateProtectorDisplayOnPanel();
