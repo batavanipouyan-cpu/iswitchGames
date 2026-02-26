@@ -3,12 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>بازی پنل - iswitch</title>
+  <title>بازی پنل - iSwitch</title>
   <style>
-    /* فونت ها */
+    /* =========================================
+       فونت ها و متغیرها
+       ========================================= */
     @font-face {
       font-family: 'Digital7';
-      src: url('assets/digital-7.ttf') format('truetype');
+      src: url('assets/digital-7.ttf') format('truetype'); /* اطمینان حاصل کنید فایل موجود باشد یا فونت جایگزین لود شود */
       font-weight: normal;
       font-style: normal;
     }
@@ -24,7 +26,8 @@
 
     * {
       box-sizing: border-box;
-      user-select: none; /* جلوگیری از انتخاب متن روی دکمه ها */
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body {
@@ -32,19 +35,58 @@
       padding: 0;
       width: 100vw;
       height: 100vh;
-      background: #051020;
+      background: linear-gradient(180deg, #051020, #071025 40%);
       font-family: "Vazirmatn", "Tahoma", sans-serif;
       color: #e6eef6;
-      overflow: hidden; /* جلوگیری از اسکرول کل صفحه */
+      overflow: hidden; 
     }
 
-    /* --- فرم ورود --- */
+    /* =========================================
+       صفحه لودینگ متحرک
+       ========================================= */
+    #loadingScreen {
+      position: fixed;
+      inset: 0;
+      background: #051020;
+      z-index: 999999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.6s ease, visibility 0.6s;
+    }
+
+    .loader-ring {
+      width: 80px;
+      height: 80px;
+      border: 4px solid rgba(0, 255, 157, 0.1);
+      border-top: 4px solid var(--accent);
+      border-radius: 50%;
+      animation: spinLoader 1s linear infinite;
+      box-shadow: 0 0 20px rgba(0, 255, 157, 0.2);
+    }
+
+    .loader-text {
+      margin-top: 20px;
+      font-family: 'Digital7', monospace;
+      font-size: 28px;
+      color: var(--accent);
+      letter-spacing: 3px;
+      animation: pulseText 1.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes spinLoader { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    @keyframes pulseText { 0% { opacity: 0.5; text-shadow: 0 0 5px var(--accent); } 100% { opacity: 1; text-shadow: 0 0 15px var(--accent); } }
+
+    /* =========================================
+       فرم ورود اطلاعات
+       ========================================= */
     .login-overlay {
       position: fixed;
       inset: 0;
       background: linear-gradient(135deg, #071025, #0a192f);
       z-index: 9999;
-      display: flex;
+      display: none;
       align-items: center;
       justify-content: center;
       transition: opacity 0.5s ease;
@@ -66,166 +108,103 @@
       margin-top: 0;
       color: var(--accent);
       margin-bottom: 20px;
+      text-shadow: 0 0 10px rgba(0,255,157,0.3);
     }
 
-    .input-group {
-      margin-bottom: 15px;
-      text-align: right;
-    }
-
-    .input-group label {
-      display: block;
-      margin-bottom: 5px;
-      font-size: 14px;
-      color: #a8c0d8;
-    }
-
+    .input-group { margin-bottom: 15px; text-align: right; }
+    .input-group label { display: block; margin-bottom: 5px; font-size: 14px; color: #a8c0d8; }
     .input-group input {
-      width: 100%;
-      padding: 12px;
-      border-radius: 8px;
+      width: 100%; padding: 12px; border-radius: 8px;
       border: 1px solid rgba(255,255,255,0.2);
-      background: rgba(0,0,0,0.2);
-      color: #fff;
-      font-family: inherit;
-      outline: none;
-      transition: border-color 0.3s;
+      background: rgba(0,0,0,0.3); color: #fff;
+      font-family: inherit; outline: none; transition: border-color 0.3s;
     }
-
-    .input-group input:focus {
-      border-color: var(--accent);
-    }
+    .input-group input:focus { border-color: var(--accent); box-shadow: 0 0 8px rgba(0,255,157,0.2); }
 
     .start-btn {
-      width: 100%;
-      padding: 12px;
-      background: var(--accent);
-      color: #042018;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-      margin-top: 10px;
-      transition: transform 0.2s, box-shadow 0.2s;
+      width: 100%; padding: 12px; background: var(--accent); color: #042018;
+      border: none; border-radius: 8px; font-size: 16px; font-weight: bold;
+      cursor: pointer; margin-top: 15px; transition: transform 0.2s, box-shadow 0.2s;
     }
+    .start-btn:active { transform: scale(0.98); }
+    .error-msg { color: #ffbbb7; font-size: 12px; margin-top: 5px; display: none; }
 
-    .start-btn:active {
-      transform: scale(0.98);
-    }
-
-    .error-msg {
-      color: #ffbbb7;
-      font-size: 12px;
-      margin-top: 5px;
-      display: none;
-    }
-
-    /* --- محفظه اصلی بازی جهت اسکرول و زوم در موبایل --- */
+    /* =========================================
+       محیط اصلی بازی
+       ========================================= */
     .game-viewport {
       width: 100vw;
       height: 100vh;
-      overflow: auto; /* اسکرول آزاد برای رسیدن به همه جای پنل */
-      display: flex;
-      align-items: center; /* وسط چین کردن پنل در دسکتاپ */
+      overflow: hidden; /* جلوگیری از اسکرول مرورگر */
+      display: none; 
+      align-items: center;
       justify-content: center;
-      padding: 20px;
-      display: none; /* تا قبل از ورود مخفی است */
+      background: #000;
     }
 
-    /* پنل اصلی */
+    /* Container اصلی برای زوم و پن */
+    .zoom-container {
+        overflow: hidden; 
+        touch-action: none; 
+        position: relative;
+        cursor: grab;
+        width: 100%; height: 100%;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .zoom-container:active { cursor: grabbing; }
+
     .panel-wrap {
-      position: relative;
+      position: absolute; /* تغییر به absolute برای هندل بهتر ترنسفرم */
       width: var(--panel-w);
       height: var(--panel-h);
-      flex-shrink: 0; /* جلوگیری از فشرده شدن در فلکس باکس */
+      flex-shrink: 0; 
+      background: transparent;
+      transform-origin: center center;
     }
 
-    /* عکس پس زمینه */
     .panel-bg {
-      width: 100%;
-      height: 100%;
-      display: block;
-      position: absolute;
-      top: 0;
-      left: 0;
-      z-index: 1;
+      width: 100%; height: 100%; display: block; position: absolute; top: 0; left: 0; z-index: 1; pointer-events: none;
     }
 
-    /* همه المان‌ها روی عکس */
     .mushroom, .push-btn, .selector, .joystick, .fan-wrap, 
     .led, .protector-area, .game-timer, .stages, 
     .map-small, .error-badge, .win-light {
-      position: absolute;
-      z-index: 2;
+      position: absolute; z-index: 2;
     }
 
     /* LED ها */
     .led {
-      width: var(--led-size);
-      height: var(--led-size);
-      border-radius: 50%;
-      box-shadow: 0 0 0 rgba(0,0,0,0.0);
-      opacity: 0.35;
-      transition: all .18s ease;
-      pointer-events: none;
+      width: var(--led-size); height: var(--led-size); border-radius: 50%;
+      box-shadow: 0 0 0 rgba(0,0,0,0.0); opacity: 0.35; transition: all .18s ease; pointer-events: none;
     }
-    .led-red { 
-        background: radial-gradient(circle at 30% 30%, #f72c2c, #ff0000);
-        left: 1274px; top: 138px; z-index: 3;
-    }
-    .led-yellow { 
-        background: radial-gradient(circle at 30% 30%, #ffd93d, #ff9f00);
-        left:1274px; top: 45px; z-index: 2;
-    }
-    .led-green { 
-        background: radial-gradient(circle at 30% 30%, #6bff6b, #00ff00);
-        left: 1274px; top: 138px; z-index: 3;
-    }
-    .led[data-state="on"] { 
-        opacity: 1; 
-        filter: drop-shadow(0 0 15px currentColor) brightness(1.3);
-    }
+    .led-red { background: radial-gradient(circle at 30% 30%, #f72c2c, #ff0000); left: 1274px; top: 138px; z-index: 3; }
+    .led-yellow { background: radial-gradient(circle at 30% 30%, #ffd93d, #ff9f00); left:1274px; top: 45px; z-index: 2; }
+    .led-green { background: radial-gradient(circle at 30% 30%, #6bff6b, #00ff00); left: 1274px; top: 138px; z-index: 3; }
+    .led[data-state="on"] { opacity: 1; filter: drop-shadow(0 0 15px currentColor) brightness(1.3); }
 
     /* پوش باتن ها */
     .push-btn {
-      width: 45px;
-      height: 45px;
-      border-radius: 50%;
-      border: none;
-      background: #d9534f;
-      color: #fff;
-      font-weight: 700;
-      cursor: pointer;
-      transition: transform .06s ease, box-shadow .06s ease;
-      box-shadow: 0 8px 0 rgba(0,0,0,0.4);
+      width: 45px; height: 45px; border-radius: 50%; border: none;
+      background: transparent; color: rgba(255,255,255,0.7); font-weight: 700;
+      font-size: 11px; cursor: pointer; transition: transform .06s ease;
+      box-shadow: none;
     }
-    #S1 {left: 1448px; top: 142px; background: #00000000; }
-    #S4_START { left: 1056px; top: 186px; background: #00000000; }
-    #S4_STOP { left: 1056px; top: 240px; background: #ef444400; }
-    #S6_START { left: 1170px; top: 164px; background: #00000000; }
-    #S6_STOP { left: 1170px; top: 240px; background: #00000000; }
-    #S7 { left: 1626px;top: 357.3px; background: #00000000; }
-    #S8 { left: 1626px;top: 238.3px; background: #00000000; }
-    #S10 { left: 1626px;top: 140px;background: #39796400;}
+    #S1 {left: 1448px; top: 142px; }
+    #S4_START { left: 1056px; top: 186px; }
+    #S4_STOP { left: 1056px; top: 240px; }
+    #S6_START { left: 1170px; top: 164px; }
+    #S6_STOP { left: 1170px; top: 240px; }
+    #S7 { left: 1626px;top: 357.3px; }
+    #S8 { left: 1626px;top: 238.3px; }
+    #S10 { left: 1626px;top: 140px;}
 
-    .push-btn[aria-pressed="true"] {
-      transform: translateY(6px);
-      box-shadow: 0 2px 0 rgba(0,0,0,0.6);
-    }
+    .push-btn[aria-pressed="true"] { transform: translateY(6px); }
 
     /* سلکتورها */
     .selector {
-      width: 48px;
-      height: 28px;
-      border-radius: 6px;
-      background: rgba(0,0,0,0.5);
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: transform .08s ease;
+      width: 48px; height: 28px; border-radius: 6px; background: rgba(0,0,0,0.5);
+      color: #fff; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: transform .08s ease; user-select: none;
     }
     .selector[data-pos="left"] { transform: rotate(310deg); }
     .selector[data-pos="right"] { transform: rotate(18deg); }
@@ -235,279 +214,138 @@
 
     /* جوی استیک */
     .joystick {
-      left: 1666px;
-      top: 34px;
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      background: #111827;
-      border: none;
-      color: #fff;
-      cursor: pointer;
-      transition: transform .12s ease;
+      left: 1666px; top: 34px; width: 30px; height: 30px; border-radius: 50%;
+      background: #111827; border: none; color: #fff; cursor: pointer; transition: transform .12s ease;
     }
     .joystick[data-pos="down"] { transform: translateY(10px) rotate(6deg); }
 
     /* محافظ */
     .protector-area {
-        left: 23.3%;
-        top: 45.4%;
-        width: 60px;
-        height: 60px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(0, 0, 0, 0.7);
-        border-radius: 8px;
+        left: 23.3%; top: 45.4%; width: 60px; height: 60px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.7); border-radius: 8px;
     }
-    .protector-display {
-      font-family: 'Digital7', monospace;
-      font-size: 28px;
-      color: #ff3b30;
-      text-shadow: 0 0 10px rgba(255, 59, 48, 0.5);
-    }
+    .protector-display { font-family: 'Digital7', monospace; font-size: 28px; color: #ff3b30; text-shadow: 0 0 10px rgba(255, 59, 48, 0.5); }
 
     /* فن ها */
-    .fan-wrap {
-      width: 175px;
-      height: 175px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .fan-base { 
-      position: absolute; 
-      width: 100%; 
-      height: 100%; 
-    }
-    .fan-blade {
-      position: absolute; 
-      width: 70%;
-      height: 70%;
-      transform-origin: center center;
-      transition: opacity .16s ease;
-      opacity: 0;
-    }
+    .fan-wrap { width: 175px; height: 175px; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+    .fan-base { position: absolute; width: 100%; height: 100%; object-fit: contain;}
+    .fan-blade { position: absolute; width: 70%; height: 70%; object-fit: contain; transform-origin: center center; transition: opacity .16s ease; opacity: 0; }
     #fanBlue { left: 52%; top: 59.7%; }
     #fanYellow { left: 66.1%; top: 59.7%; }
-    .rotate-medium {
-      animation: spin 0.7s linear infinite;
-      opacity: 1;
-    }
-    @keyframes spin { 
-      from { transform: rotate(0deg); } 
-      to { transform: rotate(360deg); } 
-    }
+    
+    .rotate-medium { animation: fanSpin 0.7s linear infinite; opacity: 1; }
+    @keyframes fanSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
     /* دکمه قارچی */
-    .mushroom {
-      width: 50px;
-      height: 50px;
-      left: 1450px;
-      top: 40px;
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      border-radius: 26px;
-    }
+    .mushroom { width: 50px; height: 50px; left: 1450px; top: 40px; background: transparent; border: none; cursor: pointer; border-radius: 26px; }
 
     /* تیک مراحل */
-    .stages {
-      right:70%;
-      top: 5%;
-      display: flex;
-      gap: 8px;
-    }
+    .stages { right:70%; top: 5%; display: flex; gap: 8px; }
     .stage {
-      width: 26px;
-      height: 26px;
-      border-radius: 6px;
-      background: rgba(255,255,255,0.06);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      color: #a8c0d8;
-      font-size: 13px;
+      width: 26px; height: 26px; border-radius: 6px; background: rgba(255,255,255,0.06);
+      display: flex; align-items: center; justify-content: center; font-weight: 700; color: #a8c0d8; font-size: 13px;
     }
-    .stage.done { 
-      background: linear-gradient(90deg, #34d399, #10b981); 
-      color: #042018; 
-      box-shadow: 0 6px 16px rgba(16,185,129,0.12); 
-    }
+    .stage.done { background: linear-gradient(90deg, #34d399, #10b981); color: #042018; box-shadow: 0 6px 16px rgba(16,185,129,0.12); }
 
-    /* تایمر کلی بازی */
-    .game-timer {
-      left: 5%;
-      top: 5%;
-      background: rgba(0,0,0,0.6);
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-family: 'Digital7', monospace;
-      font-size: 22px;
-      color: #ffd166;
-    }
-
-    /* نقشه روی برد */
+    /* تایمر و نقشه */
+    .game-timer { left: 5%; top: 5%; background: rgba(0,0,0,0.6); padding: 8px 12px; border-radius: 8px; font-family: 'Digital7', monospace; font-size: 22px; color: #ffd166; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
     .map-small {
-      left: 5%;
-      bottom: 5%;
-      width: 80px;
-      height: 60px;
-      border-radius: 6px;
-      cursor: pointer;
-      border: 2px solid rgba(255,255,255,0.1);
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(255,255,255,0.1);
-      color: white;
-      font-size: 12px;
+      left: 5%; bottom: 5%; width: 80px; height: 60px; border-radius: 6px; cursor: pointer;
+      border: 2px solid rgba(255,255,255,0.1); overflow: hidden; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.1); color: white; font-size: 12px; z-index: 10;
     }
-    .map-thumbnail { width: 100%; height: 100%; object-fit: cover; }
+    .map-thumbnail { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
 
-    /* خطای کوچک */
+    /* هشدار */
     .error-badge {
-      right: 5%;
-      bottom: 5%;
-      background: var(--error-color);
-      color: #fff;
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      opacity: 0;
-      transform: translateY(8px);
-      transition: all .28s ease;
+      right: 5%; bottom: 5%; background: var(--error-color); color: #fff; width: 30px; height: 30px;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; opacity: 0; transform: translateY(8px); transition: all .28s ease;
     }
     .error-badge.show { opacity: 1; transform: translateY(0); }
 
-    /* چراغ برنده شدن */
+    /* چراغ برنده شدن (سبز رنگ) */
     .win-light {
-      left: 50%;
-      top: 5%;
-      width: 400px;
-      height: 120px;
-      border-radius: 8px;
-      background: transparent;
-      border: 3px solid rgba(255,255,255,0.1);
-      transition: all .3s ease;
-      transform: translateX(-50%);
+      left: 50%; top: 5%; width: 400px; height: 120px; border-radius: 8px;
+      background: transparent; border: 3px solid rgba(255,255,255,0.1); box-shadow: none; transition: all .3s ease; transform: translateX(-50%); pointer-events: none;
     }
     .win-light.on { 
-      border:3px solid #ffbbb7;
-      box-shadow: 0 0 20px rgba(249,115,22,0.8), 0 0 40px rgba(249,115,22,0.4), inset 0 0 15px rgba(249,115,22,0.3);
-      animation: pulse 1.5s ease-in-out infinite alternate;
+      background: transparent;
+      border: 3px solid var(--accent); /* سبز */
+      box-shadow: 0 0 20px rgba(0,255,157,0.8), 0 0 40px rgba(0,255,157,0.4), inset 0 0 15px rgba(0,255,157,0.3);
+      animation: pulseGreen 1.5s ease-in-out infinite alternate;
+    }
+    @keyframes pulseGreen {
+      from { box-shadow: 0 0 15px rgba(0,255,157,0.6), 0 0 30px rgba(0,255,157,0.3), inset 0 0 10px rgba(0,255,157,0.2); }
+      to { box-shadow: 0 0 25px rgba(0,255,157,1), 0 0 50px rgba(0,255,157,0.6), inset 0 0 20px rgba(0,255,157,0.4); }
     }
 
-    @keyframes pulse {
-      from { box-shadow: 0 0 15px rgba(249,115,22,0.6), 0 0 30px rgba(249,115,22,0.3), inset 0 0 10px rgba(249,115,22,0.2); }
-      to { box-shadow: 0 0 25px rgba(249,115,22,1), 0 0 50px rgba(249,115,22,0.6), inset 0 0 20px rgba(249,115,22,0.4); }
-    }
-
-    /* --- مودال های کلی (محافظ و نقشه) --- */
-    .modal { 
-      position: fixed; 
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      display: none; 
-      align-items: center; 
-      justify-content: center; 
-      z-index: 99999; 
-    }
+    /* =========================================
+       مودال ها
+       ========================================= */
+    .modal { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; z-index: 50; }
     .modal.open { display: flex; }
-    .modal-backdrop { 
-      position: absolute; 
-      inset: 0; 
-      background: rgba(0,0,0,0.7); 
-    }
-    .modal-box { 
-      position: relative; 
-      z-index: 100000; 
-      background: #0b1220; 
-      padding: 18px; 
-      border-radius: 12px; 
-      color: #fff; 
-      box-shadow: 0 18px 50px rgba(0,0,0,0.6); 
-      transform: scale(.8); 
-      transition: transform .28s ease; 
-    }
+    .modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.7); }
+    .modal-box { position: relative; z-index: 60; background: #0b1220; padding: 18px; border-radius: 12px; min-width: 260px; color: #fff; box-shadow: 0 18px 50px rgba(0,0,0,0.6); transform: scale(.8); transition: transform .28s ease; }
     .modal.open .modal-box { transform: scale(1); }
 
-    /* استایل مودال محافظ */
-    .protector-ui { display: flex; flex-direction: column; gap: 12px; align-items: center; min-width: 260px;}
+    /* مودال قوانین */
+    .rules-content {
+        max-width: 600px;
+        max-height: 85vh;
+        overflow-y: auto;
+        text-align: right;
+        direction: rtl;
+        line-height: 1.8;
+    }
+    .rules-text h3 {
+        color: #4CAF50;
+        margin-top: 15px;
+        border-bottom: 1px solid #555;
+        padding-bottom: 5px;
+        font-size: 16px;
+    }
+    .rules-text ul { list-style-type: disc; padding-right: 20px; margin-top: 5px; }
+    #agree-rules-btn {
+        width: 100%; margin-top: 20px; background-color: #4CAF50; font-size: 16px; padding: 12px; border:none; border-radius: 8px; color: #fff; cursor: pointer; font-weight: bold;
+    }
+    #agree-rules-btn:hover { background-color: #45a049; }
+    
+    /* حذف دکمه بستن از مودال قوانین */
+    #rules-modal .close-btn { display: none; }
+
+    /* مودال محافظ */
+    .protector-ui { display: flex; flex-direction: column; gap: 12px; align-items: center; }
     .protector-title { font-size: 20px; font-weight: 900; color: #9fd5ff; }
-    .protector-value { 
-      font-family: 'Digital7'; font-size: 38px; background: #000; padding: 6px 12px; 
-      border-radius: 8px; color: #00ff80; transition: all 0.1s ease;
-    }
+    .protector-value { font-family: 'Digital7'; font-size: 38px; background: #000; padding: 6px 12px; border-radius: 8px; color: #00ff80; transition: all 0.1s ease; }
+    .protector-value.changing { color: #ffd166; transform: scale(1.05); }
     .protector-controls { display: flex; gap: 8px; }
-    .ctrl { 
-      padding: 10px 16px; border-radius: 8px; border: none; background: #111827; 
-      color: #fff; cursor: pointer; font-weight: 700;
-    }
-    .ctrl:active { background: #1e40af; transform: scale(0.95); }
+    .ctrl { padding: 8px 12px; border-radius: 8px; border: none; background: #111827; color: #fff; cursor: pointer; font-weight: 700; transition: all 0.1s ease; }
+    .ctrl:active { background: #1e40af !important; transform: scale(0.95); }
     .prot-close { cursor: pointer; color: #9fb1c9; font-size: 13px; margin-top:10px;}
 
-    /* استایل مودال نقشه */
-    .map-modal .modal-box {
-      width: 95vw;
-      height: 95vh;
-      max-width: none;
-      padding: 0;
-      background: transparent;
-      box-shadow: 0 25px 80px rgba(0,0,0,0.9);
-      border: 3px solid rgba(255,255,255,0.1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    /* مودال نقشه */
+    .map-modal .modal-box { 
+        max-width: 95vw; max-height: 95vh; width: 95vw; height: 95vh;
+        padding: 0; background: transparent; 
+        box-shadow: 0 25px 80px rgba(0,0,0,0.9); 
+        border: 3px solid rgba(255,255,255,0.1); border-radius: 12px; 
+        overflow: hidden; display: flex; align-items: center; justify-content: center;
     }
-    .map-large {
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-    }
-    .map-close {
-      position: absolute;
-      top: 15px;
-      right: 15px; /* تغییر به راست به دلیل rtl */
-      background: rgba(255,0,50,0.8);
-      color: white;
-      border: none;
-      width: 45px;
-      height: 45px;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 24px;
-      z-index: 100001;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    /* ریسپانسیو - اسکیلینگ ارتفاعی برای موبایل */
-    @media (max-width: 900px) {
-      .game-viewport {
-        align-items: flex-start; /* در موبایل از بالا شروع شود */
-        padding: 0;
-      }
-      .panel-wrap {
-        /* پنل را بر اساس ارتفاع موبایل بزرگ میکنیم تا دکمه ها قابل لمس باشند */
-        transform-origin: top left;
-        transform: scale(calc(100vh / 650)); 
-        margin: auto;
-      }
+    .map-large { width: 100%; height: 100%; object-fit: contain; display: block; transform-origin: center center; }
+    .map-close { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 20px; z-index: 70; display: flex; align-items: center; justify-content: center; }
+    
+    /* ریسپانسیو ساده */
+    @media (orientation: portrait) {
+      .game-viewport { align-items: center; justify-content: center; }
     }
   </style>
 </head>
 <body>
+
+  <!-- صفحه لودینگ -->
+  <div id="loadingScreen">
+    <div class="loader-ring"></div>
+    <div class="loader-text">LOADING...</div>
+  </div>
 
   <!-- صفحه ورود اطلاعات -->
   <div class="login-overlay" id="loginOverlay">
@@ -527,82 +365,135 @@
           <input type="tel" id="phone" required placeholder="09123456789" maxlength="11" dir="ltr">
           <div class="error-msg" id="phoneError">شماره موبایل باید ۱۱ رقم باشد و با ۰۹ شروع شود.</div>
         </div>
-        <button type="submit" class="start-btn">ورود به بازی</button>
+        
+        <button type="submit" class="start-btn" id="startBtn">ورود به بازی</button>
       </form>
     </div>
   </div>
 
-  <!-- محیط اصلی بازی (اسکرول پذیر) -->
+  <!-- محیط اصلی بازی -->
   <main class="game-viewport" id="gameViewport">
-    <div class="panel-wrap">
-      <img src="assets/BOARD.png" alt="پنل" class="panel-bg" id="panelBg">
+    <!-- Container برای زوم -->
+    <div id="gameZoomContainer" class="zoom-container">
+        <!-- panel-wrap المانی است که زوم می‌شود -->
+        <div class="panel-wrap" id="gamePanel">
+        <img src="assets/BOARD.png" alt="پنل" class="panel-bg" id="panelBg">
 
-      <!-- LED ها -->
-      <div class="led led-red" id="LED3" data-state="off"></div>
-      <div class="led led-yellow" id="LED4" data-state="off"></div>
-      <div class="led led-green" id="LED1" data-state="off"></div>
-      
-      <!-- پوش باتن ها -->
-      <button id="S0" class="mushroom">S0</button>
-      <button class="push-btn" id="S1" aria-pressed="false">S1</button>
-      <button class="push-btn" id="S4_START" aria-pressed="false">S4 Start</button>
-      <button class="push-btn" id="S6_START" aria-pressed="false">S6 Start</button>
-      <button class="push-btn" id="S4_STOP" aria-pressed="false">S4 Stop</button>
-      <button class="push-btn" id="S6_STOP" aria-pressed="false">S6 Stop</button>
-      <button class="push-btn" id="S7" aria-pressed="false">S7</button>
-      <button class="push-btn" id="S8" aria-pressed="false">S8</button>
-      <button class="push-btn" id="S10" aria-pressed="false">S10</button>
+        <!-- LED ها -->
+        <div class="led led-red" id="LED3" data-state="off"></div>
+        <div class="led led-yellow" id="LED4" data-state="off"></div>
+        <div class="led led-green" id="LED1" data-state="off"></div>
+        
+        <!-- پوش باتن ها -->
+        <button id="S0" class="mushroom">S0</button>
+        <button class="push-btn" id="S1" data-id="S1" aria-pressed="false">S1</button>
+        <button class="push-btn" id="S4_START" data-id="S4_START" aria-pressed="false">S4 Start</button>
+        <button class="push-btn" id="S6_START" data-id="S6_START" aria-pressed="false">S6 Start</button>
+        <button class="push-btn" id="S4_STOP" data-id="S4_STOP" aria-pressed="false">S4 Stop</button>
+        <button class="push-btn" id="S6_STOP" data-id="S6_STOP" aria-pressed="false">S6 Stop</button>
+        <button class="push-btn" id="S7" data-id="S7" aria-pressed="false">S7</button>
+        <button class="push-btn" id="S8" data-id="S8" aria-pressed="false">S8</button>
+        <button class="push-btn" id="S10" data-id="S10" aria-pressed="false">S10</button>
 
-      <!-- سلکتورها -->
-      <div class="selector" id="S2" data-pos="left">S2</div>
-      <div class="selector" id="S3" data-pos="left">S3</div>
-      <div class="selector" id="S5" data-pos="left">S5</div>
+        <!-- سلکتورها -->
+        <div class="selector" id="S2" data-pos="left" role="switch">S2</div>
+        <div class="selector" id="S3" data-pos="left" role="switch">S3</div>
+        <div class="selector" id="S5" data-pos="left" role="switch">S5</div>
 
-      <!-- جوی‌استیک -->
-      <button class="joystick" id="S9" data-pos="neutral">S9</button>
+        <!-- جوی‌استیک -->
+        <button class="joystick" id="S9" data-pos="neutral">S9</button>
 
-      <!-- محافظ -->
-      <div id="protectorArea" class="protector-area">
-        <div class="protector-display" id="protectorDisplay">300</div>
-      </div>
+        <!-- محافظ -->
+        <div id="protectorArea" class="protector-area">
+            <div class="protector-display" id="protectorDisplay">300</div>
+        </div>
 
-      <!-- فن ها -->
-      <div class="fan-wrap" id="fanBlue">
-        <div class="fan-base" style="background: radial-gradient(circle at 30% 30%, #3b82f6, #1e40af); border-radius: 50%;"></div>
-        <div class="fan-blade" id="fanBladeBlue" style="background: conic-gradient(#60a5fa, #93c5fd, #60a5fa); border-radius: 50%;"></div>
-      </div>
+        <!-- فن ها -->
+        <div class="fan-wrap fan-blue" id="fanBlue">
+            <div class="fan-base" style="background: radial-gradient(circle at 30% 30%, #3b82f6, #1e40af); border-radius: 50%;"></div>
+            <div class="fan-blade" id="fanBladeBlue" style="background: conic-gradient(#60a5fa, #93c5fd, #60a5fa); border-radius: 50%;"></div>
+        </div>
 
-      <div class="fan-wrap" id="fanYellow">
-        <div class="fan-base" style="background: radial-gradient(circle at 30% 30%, #f59e0b, #d97706); border-radius: 50%;"></div>
-        <div class="fan-blade" id="fanBladeYellow" style="background: conic-gradient(#fbbf24, #fcd34d, #fbbf24); border-radius: 50%;"></div>
-      </div>
+        <div class="fan-wrap fan-yellow" id="fanYellow">
+            <div class="fan-base" style="background: radial-gradient(circle at 30% 30%, #f59e0b, #d97706); border-radius: 50%;"></div>
+            <div class="fan-blade" id="fanBladeYellow" style="background: conic-gradient(#fbbf24, #fcd34d, #fbbf24); border-radius: 50%;"></div>
+        </div>
 
-      <!-- مراحل -->
-      <div class="stages" id="stages">
-        <div class="stage" data-stage="1">1</div>
-        <div class="stage" data-stage="2">2</div>
-        <div class="stage" data-stage="3">3</div>
-        <div class="stage" data-stage="4">4</div>
-        <div class="stage" data-stage="5">5</div>
-        <div class="stage" data-stage="6">6</div>
-        <div class="stage" data-stage="7">7</div>
-      </div>
+        <!-- تیک مراحل -->
+        <div class="stages" id="stages">
+            <div class="stage" data-stage="1">1</div>
+            <div class="stage" data-stage="2">2</div>
+            <div class="stage" data-stage="3">3</div>
+            <div class="stage" data-stage="4">4</div>
+            <div class="stage" data-stage="5">5</div>
+            <div class="stage" data-stage="6">6</div>
+            <div class="stage" data-stage="7">7</div>
+        </div>
 
-      <!-- تایمر و نقشه -->
-      <div class="game-timer" id="gameTimer">02:30</div>
-      <div id="mapSmallBtn" class="map-small">
-        <img src="assets/map_small.png" alt="نقشه" class="map-thumbnail" onerror="this.style.display='none'; this.parentNode.innerHTML='نقشه';">
-      </div>
+        <!-- تایمر و نقشه -->
+        <div class="game-timer" id="gameTimer">03:00</div>
+        <div id="mapSmall" class="map-small">
+            <img src="assets/map_small.png" alt="نقشه" class="map-thumbnail" onerror="this.style.display='none'; this.parentNode.innerHTML='نقشه';">
+        </div>
 
-      <!-- هشدار و چراغ پایان -->
-      <div class="error-badge" id="errorBadge">✖</div>
-      <div class="win-light" id="winLight"></div>
+        <!-- خطا و کادر پیروزی -->
+        <div class="error-badge" id="errorBadge">✖</div>
+        <div class="win-light" id="winLight"></div>
+        </div>
     </div>
   </main>
 
-  <!-- مودال محافظ (مرتب و فیکس شده برای iOS) -->
+  <!-- مودال قوانین -->
+  <div id="rules-modal" class="modal">
+    <div class="modal-box">
+      <div class="modal-content rules-content">
+          <!-- دکمه بستن حذف شده است تا کاربر مجبور به تایید شود -->
+          <h2>شرایط و قوانین بازی iSwitch</h2>
+          <div class="rules-text">
+              <p style="color: #ffeb3b; font-weight: bold; background: #333; padding: 10px; border-radius: 5px; text-align: center;">
+                  💡 پیشنهاد مهم: برای سهولت و تسلط بیشتر در بازی با گوشی موبایل، پیشنهاد می‌شود دستگاه خود را بچرخانید و در حالت افقی (Landscape) بازی کنید.
+              </p>
+              
+              <h3>۱. احراز هویت و شرایط</h3>
+              <ul>
+                  <li><strong>یک‌بار فرصت:</strong> هر شماره موبایل تنها مجاز به یک‌بار ورود و انجام بازی است.</li>
+                  <li><strong>اطلاعات واقعی:</strong> لطفاً نام و نام خانوادگی خود را دقیق وارد کنید. تحویل جایزه منوط به تطابق دقیق این اطلاعات با هویت شماست.</li>
+              </ul>
+
+              <h3>۲. روند کلی بازی</h3>
+              <ul>
+                  <li>این بازی از <strong>۷ مرحله متوالی</strong> تشکیل شده است.</li>
+                  <li>با انجام صحیح هر مرحله، تیک سبز رنگ آن روشن می‌شود.</li>
+                  <li>برای تعامل با المان‌های روی پنل، تنها کافیست روی آن‌ها کلیک کنید (یا لمس کنید).</li>
+              </ul>
+
+              <h3>۳. نقشه و زمان بازی</h3>
+              <ul>
+                  <li>نقشه راهنمای مدار در پایین سمت چپ قرار دارد و قابلیت زوم دارد.</li>
+                  <li><strong>قانون فریز (Freeze Time):</strong> با باز کردن نقشه، تایمر بازی به مدت <strong>۲۰ ثانیه</strong> متوقف می‌شود. پس از گذشت ۲۰ ثانیه، تایمر مجدداً به کار می‌افتد.</li>
+              </ul>
+
+              <h3>۴. نکات فنی و راهنمایی‌ها</h3>
+              <ul>
+                  <li><strong>اخطارها:</strong> کلیک اشتباه یا خارج از نوبت باعث پخش صدای هشدار می‌شود.</li>
+                  <li><strong>تنظیم محافظ (TS):</strong> نمایشگر محافظ قابل کلیک است و باید در یک مرحله مقدار آن تنظیم شود.</li>
+                  <li><strong>راهنمایی مهم:</strong> در بعضی مراحل باید <strong>دو کلید را همزمان فشار بدید</strong> (فاصله فشردن نباید بیشتر از ۱.۵ ثانیه باشد).</li>
+              </ul>
+
+              <h3>۵. پایان بازی</h3>
+              <ul>
+                  <li><strong>پیروزی:</strong> با اتمام بازی در زمان موجود، چراغ پیروزی سبز شده و برنده می‌شوید! <strong>در این صورت حتماً اسکرین‌شات بگیرید.</strong></li>
+                  <li><strong>شکست:</strong> در صورت اتمام زمان، پیام شکست نمایش داده می‌شود.</li>
+              </ul>
+          </div>
+          <button id="agree-rules-btn">متوجه شدم و قوانین را می‌پذیرم</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- مودال محافظ -->
   <div class="modal" id="protectorModal">
-    <div class="modal-backdrop" id="modalBackdrop"></div>
+    <div class="modal-backdrop" id="protBackdrop"></div>
     <div class="modal-box">
       <div class="protector-ui">
         <div class="protector-title">TS</div>
@@ -617,84 +508,109 @@
     </div>
   </div>
 
-  <!-- مودال نقشه بزرگ -->
-  <div class="modal map-modal" id="mapModalFull">
-    <div class="modal-backdrop" id="mapBackdropFull"></div>
-    <div class="modal-box">
+  <!-- مودال نقشه -->
+  <div class="modal map-modal" id="mapModal">
+    <div class="modal-backdrop" id="mapBackdrop"></div>
+    <div class="modal-box map-box">
       <button class="map-close" id="mapCloseBtn">×</button>
-      <img src="assets/map_large.jpg" alt="نقشه بزرگ" class="map-large" onerror="this.alt='عکس نقشه پیدا نشد'">
+      <!-- کانتینر برای زوم نقشه -->
+      <div id="mapZoomContainer" class="zoom-container">
+         <img src="assets/map_large.jpg" alt="نقشه بزرگ بازی" class="map-large" id="mapLarge" onerror="this.alt='عکس نقشه پیدا نشد'">
+      </div>
     </div>
   </div>
 
   <script>
     /* =========================================
-       بخش مدیریت ورود و ثبت نام بازیکن
+       1. لودینگ و مدیریت فرم ورود + قوانین
        ========================================= */
-    const loginForm = document.getElementById('loginForm');
+    const loadingScreen = document.getElementById('loadingScreen');
     const loginOverlay = document.getElementById('loginOverlay');
     const gameViewport = document.getElementById('gameViewport');
-    const phoneInput = document.getElementById('phone');
-    const phoneError = document.getElementById('phoneError');
+    
+    // المان‌های قوانین
+    const rulesModal = document.getElementById('rules-modal');
+    const agreeRulesBtn = document.getElementById('agree-rules-btn');
+    
+    // سیستم زوم
+    let fitGameToScreen; 
 
-    // اطلاعات بازیکن برای ارسال به بک اند
+    window.addEventListener('load', () => {
+      // شبیه سازی لودینگ
+      setTimeout(() => {
+        loadingScreen.style.opacity = '0';
+        setTimeout(() => {
+          loadingScreen.style.display = 'none';
+          loginOverlay.style.display = 'flex';
+        }, 600);
+      }, 1500); 
+    });
+
+    // 1. سابمیت فرم ورود -> نمایش قوانین
+    const loginForm = document.getElementById('loginForm');
     let playerData = {};
 
     loginForm.addEventListener('submit', function(e) {
       e.preventDefault();
+      const phoneVal = document.getElementById('phone').value.trim();
+      const phoneError = document.getElementById('phoneError');
       
-      const phoneVal = phoneInput.value.trim();
-      // بررسی شرط موبایل ایران
-      const phoneRegex = /^09[0-9]{9}$/;
-      
-      if(!phoneRegex.test(phoneVal)) {
+      // اعتبارسنجی ساده شماره
+      if(!/^09[0-9]{9}$/.test(phoneVal)) {
         phoneError.style.display = 'block';
         return;
       }
-      
       phoneError.style.display = 'none';
 
-      // ذخیره اطلاعات
-      playerData = {
-        firstName: document.getElementById('fname').value.trim(),
-        lastName: document.getElementById('lname').value.trim(),
-        phone: phoneVal
+      playerData = { 
+          firstName: document.getElementById('fname').value.trim(),
+          lastName: document.getElementById('lname').value.trim()
       };
 
-      // اینجا می‌توانید اطلاعات را به سمت سرور خود ارسال کنید
-      console.log("ورود بازیکن موفقیت آمیز بود:", playerData);
-
-      // مخفی کردن فرم ورود و نمایش برد گیم
+      // مخفی کردن فرم ورود و باز کردن مودال قوانین
       loginOverlay.style.opacity = '0';
       setTimeout(() => {
         loginOverlay.style.display = 'none';
-        gameViewport.style.display = 'flex';
-        // هدایت کاربر به وسط تصویر در موبایل
-        gameViewport.scrollLeft = 500; 
+        rulesModal.classList.add('open'); // باز شدن خودکار قوانین
       }, 500);
     });
 
-    /* =========================================
-       بخش صداها و بازی (کدهای قبلی با اصلاحات جزئی)
-       ========================================= */
-    const assets = {
-      click: 'assets/click.mp3',
-      error: 'assets/error.mp3',
-      fan: 'assets/fan_loop.mp3'
-    };
+    // 2. پذیرش قوانین -> شروع بازی
+    agreeRulesBtn.addEventListener('click', () => {
+        rulesModal.classList.remove('open');
+        
+        // نمایش صفحه بازی
+        gameViewport.style.display = 'flex';
+        
+        // اعمال زوم و فیت کردن برد به صفحه در لحظه نمایش
+        setTimeout(() => {
+            fitGameToScreen = applyPanZoom('gameZoomContainer', 'gamePanel', true);
+            applyPanZoom('mapZoomContainer', 'mapLarge', false);
+        }, 100);
 
-    function playSound(src, volume = 0.6, loop = false){
+        // شروع تایمر بازی
+        startGameTimer();
+    });
+
+
+    /* =========================================
+       2. سیستم صوتی
+       ========================================= */
+    const assets = { click: 'assets/click.mp3', error: 'assets/error.mp3' };
+    function playSound(src, volume = 0.6){
       try {
         const a = new Audio(src);
         a.volume = volume;
-        a.loop = loop;
         a.play().catch(()=>{});
-        return a;
       } catch(e){}
     }
 
+    /* =========================================
+       3. وضعیت و متغیرهای بازی
+       ========================================= */
     const state = {
       stage: 0,
-      gameTimerSec: 150,
+      gameTimerSec: 150, // 2.5 دقیقه
       protectorValue: 300,
       protectorActive: false,
       signals: { LED3: 'off', LED4: 'off', LED1: 'off' },
@@ -704,139 +620,168 @@
       fan: { blue: false, yellow: false },
       lastPressTimestamps: {},
       gameRunning: false,
-      gameTimerInterval: null
+      gameTimerInterval: null,
+      
+      // متغیرهای فریز نقشه
+      isTimerPaused: false,
+      mapFreezeTimeout: null
     };
 
     const $ = sel => document.querySelector(sel);
-    const LED3 = $('#LED3'), LED4 = $('#LED4'), LED1 = $('#LED1');
     const errorBadge = $('#errorBadge');
-    
-    function updateProtectorDisplayOnPanel() {
-      $('#protectorDisplay').textContent = state.protectorValue;
-    }
+    const winLight = $('#winLight');
+    const fanBladeBlue = $('#fanBladeBlue');
+    const fanBladeYellow = $('#fanBladeYellow');
 
-    function showError() {
-      errorBadge.classList.add('show');
-      playSound(assets.error, 0.6);
-      setTimeout(() => errorBadge.classList.remove('show'), 700);
-    }
-
-    function setStageDone(n) {
-      const el = document.querySelector(`.stage[data-stage="${n}"]`);
-      if(el) el.classList.add('done');
-    }
-
+    /* توابع کمکی */
+    function showError() { errorBadge.classList.add('show'); playSound(assets.error, 0.6); setTimeout(() => errorBadge.classList.remove('show'), 700); }
+    function setStageDone(n) { const el = document.querySelector(`.stage[data-stage="${n}"]`); if(el) el.classList.add('done'); }
     function setLED(id, stateVal) {
       state.signals[id] = stateVal ? 'on' : 'off';
-      const el = (id === 'LED3')? LED3 : (id === 'LED4')? LED4 : LED1;
-      el.dataset.state = stateVal ? 'on' : 'off';
+      const el = $('#' + id);
+      if(el) el.dataset.state = stateVal ? 'on' : 'off';
+    }
+    function updateProtectorDisplayOnPanel() { $('#protectorDisplay').textContent = state.protectorValue; }
+    
+    function setFan(name, on) {
+      if(name === 'blue') {
+        state.fan.blue = on;
+        if(on) { fanBladeBlue.style.opacity = '1'; fanBladeBlue.classList.add('rotate-medium'); } 
+        else { fanBladeBlue.style.opacity = '0'; fanBladeBlue.classList.remove('rotate-medium'); }
+      } else {
+        state.fan.yellow = on;
+        if(on) { fanBladeYellow.style.opacity = '1'; fanBladeYellow.classList.add('rotate-medium'); } 
+        else { fanBladeYellow.style.opacity = '0'; fanBladeYellow.classList.remove('rotate-medium'); }
+      }
     }
 
+    /* =========================================
+       4. تایمر بازی با قابلیت فریز
+       ========================================= */
     function startGameTimer() {
       if(state.gameRunning) return;
       state.gameRunning = true;
+      
       const tEl = $('#gameTimer');
-      
       const updateTime = () => {
-        const mm = String(Math.floor(state.gameTimerSec/60)).padStart(2,'0');
-        const ss = String(state.gameTimerSec%60).padStart(2,'0');
-        tEl.textContent = `${mm}:${ss}`;
+        const m = Math.floor(state.gameTimerSec / 60).toString().padStart(2, '0');
+        const s = (state.gameTimerSec % 60).toString().padStart(2, '0');
+        tEl.textContent = `${m}:${s}`;
+        
+        // تغییر رنگ هنگام فریز یا کم بودن زمان
+        if (state.isTimerPaused) {
+            tEl.style.color = '#2196f3'; // آبی هنگام فریز
+        } else if (state.gameTimerSec <= 30) {
+            tEl.style.color = '#ff3b3b'; // قرمز هشدار
+        } else {
+            tEl.style.color = '#ffd166'; // عادی
+        }
       };
-      
       updateTime();
+
       state.gameTimerInterval = setInterval(() => {
-        state.gameTimerSec--;
-        updateTime();
-        if(state.gameTimerSec <= 0) {
-          clearInterval(state.gameTimerInterval);
-          state.gameRunning = false;
-          showError();
-          alert('زمان بازی به پایان رسید — شکست.');
-          window.location.reload();
+        // فقط اگر تایمر متوقف نباشد کم کن
+        if (!state.isTimerPaused) {
+            state.gameTimerSec--;
+            updateTime();
+            
+            if(state.gameTimerSec <= 0) {
+              clearInterval(state.gameTimerInterval); 
+              state.gameRunning = false;
+              showError(); 
+              alert('متاسفانه زمان بازی به پایان رسید. شکست خوردید.'); 
+              window.location.reload();
+            }
         }
       }, 1000);
     }
 
-    /* === مودال نقشه اصلاح شده === */
-    const mapSmallBtn = $('#mapSmallBtn');
-    const mapModalFull = $('#mapModalFull');
-    const mapCloseBtn = $('#mapCloseBtn');
-    const mapBackdropFull = $('#mapBackdropFull');
+    /* =========================================
+       5. مودال نقشه و لاجیک فریز ۲۰ ثانیه
+       ========================================= */
+    const mapModal = $('#mapModal');
 
-    function openMap() {
-      mapModalFull.classList.add('open');
+    function openMapLogic() {
+        mapModal.classList.add('open');
+        state.isTimerPaused = true; // توقف تایمر
+        $('#gameTimer').style.color = '#2196f3'; // تغییر رنگ نشانگر به آبی
+        
+        // اگر قبلاً تایم‌اوتی بود پاک کن
+        if(state.mapFreezeTimeout) clearTimeout(state.mapFreezeTimeout);
+        
+        // بعد از ۲۰ ثانیه، تایمر اجباراً راه بیفتد حتی اگر نقشه باز است
+        state.mapFreezeTimeout = setTimeout(() => {
+            state.isTimerPaused = false;
+            $('#gameTimer').style.color = (state.gameTimerSec <= 30) ? '#ff3b3b' : '#ffd166';
+        }, 20000); // 20 ثانیه
     }
-    function closeMap() {
-      mapModalFull.classList.remove('open');
-    }
-    mapSmallBtn.addEventListener('click', openMap);
-    mapCloseBtn.addEventListener('click', closeMap);
-    mapBackdropFull.addEventListener('click', closeMap);
 
+    function closeMapLogic() {
+        mapModal.classList.remove('open');
+        state.isTimerPaused = false; // ادامه فوری تایمر با بستن نقشه
+        if(state.mapFreezeTimeout) clearTimeout(state.mapFreezeTimeout);
+         $('#gameTimer').style.color = (state.gameTimerSec <= 30) ? '#ff3b3b' : '#ffd166';
+    }
 
-    /* === مودال محافظ اصلاح شده === */
-    const protectorModal = $('#protectorModal');
-    function openProtector() {
-      protectorModal.classList.add('open');
-      state.protectorActive = true;
-      $('#protectorValue').textContent = 'S' + state.protectorValue;
-    }
-    function closeProtector() {
-      protectorModal.classList.remove('open');
-      state.protectorActive = false;
-      updateProtectorDisplayOnPanel();
-    }
-    $('#protectorArea').addEventListener('click', openProtector);
-    $('#protClose').addEventListener('click', closeProtector);
-    $('#modalBackdrop').addEventListener('click', closeProtector);
+    $('#mapSmall').addEventListener('click', openMapLogic);
+    $('#mapCloseBtn').addEventListener('click', closeMapLogic);
+    $('#mapBackdrop').addEventListener('click', closeMapLogic);
 
-    let pInt1, pInt2;
-    function updatePVal(val) {
-      state.protectorValue = val;
-      if(state.protectorValue > 500) state.protectorValue = 1;
-      if(state.protectorValue < 1) state.protectorValue = 1;
-      $('#protectorValue').textContent = 'S' + state.protectorValue;
-    }
+    /* =========================================
+       6. مودال محافظ
+       ========================================= */
+    let protUpInterval, protDownInterval;
+    function openProtectorModal() { $('#protectorModal').classList.add('open'); state.protectorActive = true; $('#protectorValue').textContent = 'S' + state.protectorValue; playSound(assets.click, 0.25); }
+    function closeProtectorModal() { $('#protectorModal').classList.remove('open'); state.protectorActive = false; updateProtectorDisplayOnPanel(); }
     
-    $('#protUp').addEventListener('mousedown', () => pInt1 = setInterval(()=>updatePVal(state.protectorValue+1),30));
-    $('#protUp').addEventListener('mouseup', () => clearInterval(pInt1));
-    $('#protUp').addEventListener('mouseleave', () => clearInterval(pInt1));
-    $('#protUp').addEventListener('touchstart', () => pInt1 = setInterval(()=>updatePVal(state.protectorValue+1),30));
-    $('#protUp').addEventListener('touchend', () => clearInterval(pInt1));
-    $('#protUp').addEventListener('click', () => updatePVal(state.protectorValue+1));
+    function updateProtectorModalDisplay() {
+      const pValEl = $('#protectorValue');
+      pValEl.textContent = 'S' + state.protectorValue;
+      pValEl.classList.add('changing'); setTimeout(() => pValEl.classList.remove('changing'), 100);
+    }
+    function incrementProtector() { state.protectorValue++; if(state.protectorValue > 500) state.protectorValue = 1; updateProtectorModalDisplay(); }
+    function decrementProtector() { state.protectorValue = Math.max(1, state.protectorValue - 1); updateProtectorModalDisplay(); }
 
-    $('#protDown').addEventListener('mousedown', () => pInt2 = setInterval(()=>updatePVal(state.protectorValue-1),30));
-    $('#protDown').addEventListener('mouseup', () => clearInterval(pInt2));
-    $('#protDown').addEventListener('mouseleave', () => clearInterval(pInt2));
-    $('#protDown').addEventListener('touchstart', () => pInt2 = setInterval(()=>updatePVal(state.protectorValue-1),30));
-    $('#protDown').addEventListener('touchend', () => clearInterval(pInt2));
-    $('#protDown').addEventListener('click', () => updatePVal(state.protectorValue-1));
+    const protUp = $('#protUp'), protDown = $('#protDown');
+    function startIncrement() { playSound(assets.click, 0.2); incrementProtector(); protUpInterval = setInterval(incrementProtector, 50); }
+    function startDecrement() { playSound(assets.click, 0.2); decrementProtector(); protDownInterval = setInterval(decrementProtector, 50); }
+    function stopIncrement() { clearInterval(protUpInterval); clearInterval(protDownInterval); }
 
-    /* SET محافظ */
+    protUp.addEventListener('mousedown', startIncrement); protUp.addEventListener('touchstart', startIncrement);
+    protUp.addEventListener('mouseup', stopIncrement); protUp.addEventListener('touchend', stopIncrement);
+    protDown.addEventListener('mousedown', startDecrement); protDown.addEventListener('touchstart', startDecrement);
+    protDown.addEventListener('mouseup', stopIncrement); protDown.addEventListener('touchend', stopIncrement);
+    
+    // تک کلیک برای دسکتاپ
+    protUp.addEventListener('click', incrementProtector); 
+    protDown.addEventListener('click', decrementProtector);
+
     $('#protSet').addEventListener('click', () => {
       playSound(assets.click, 0.3);
+      // شرط مرحله 2: اگر محافظ روی 1 ست شود و چراغ زرد روشن باشد
       if(state.protectorValue === 1 && state.stage === 2 && state.signals.LED4 === 'on') {
         setTimeout(() => {
-          setLED('LED4', false);
-          setLED('LED1', true);
-          state.stage = 3;
-          setStageDone(3);
-          closeProtector();
-        }, 1000);
-      } else {
-        closeProtector();
-      }
+          setLED('LED4', false); setLED('LED1', true);
+          state.stage = 3; setStageDone(3); closeProtectorModal();
+        }, 500);
+      } else { closeProtectorModal(); }
     });
 
-    /* دکمه ها و منطق بازی */
+    $('#protectorArea').addEventListener('click', openProtectorModal);
+    $('#protClose').addEventListener('click', closeProtectorModal);
+    $('#protBackdrop').addEventListener('click', closeProtectorModal);
+
+    /* =========================================
+       7. رویدادهای دکمه ها روی برد
+       ========================================= */
     $('#S0').addEventListener('click', () => {
       playSound(assets.click, 0.3);
-      if(state.stage === 0) {
-        state.stage = 1;
-        setLED('LED3', true);
-        setLED('LED1', false);
-        setStageDone(1);
-        startGameTimer();
+      // شروع مرحله 1 با زدن S0
+      if(state.stage === 0) { 
+          state.stage = 1; 
+          setLED('LED3', true); 
+          setLED('LED1', false); 
+          setStageDone(1); 
       }
     });
 
@@ -844,9 +789,9 @@
       const el = document.getElementById(id);
       el.addEventListener('click', () => {
         playSound(assets.click, 0.2);
-        el.dataset.pos = (el.dataset.pos === 'left') ? 'right' : 'left';
-        state.selector[id] = el.dataset.pos;
-        checkLogic('selector', id);
+        const next = (el.dataset.pos === 'left') ? 'right' : 'left';
+        el.dataset.pos = next; state.selector[id] = next;
+        checkStageProgress('selector', id);
       });
     });
 
@@ -854,8 +799,7 @@
       playSound(assets.click, 0.2);
       const el = $('#S9');
       el.dataset.pos = (el.dataset.pos === 'neutral') ? 'down' : 'neutral';
-      state.joystick = el.dataset.pos;
-      checkLogic('joystick');
+      state.joystick = el.dataset.pos; checkStageProgress('joystick', 'S9');
     });
 
     ['S1','S4_START','S4_STOP','S6_START','S6_STOP','S7','S8','S10'].forEach(id => {
@@ -863,64 +807,229 @@
       el.addEventListener('click', () => {
         playSound(assets.click, 0.2);
         el.setAttribute('aria-pressed', 'true');
+        state.pushes[id] = true;
         state.lastPressTimestamps[id] = Date.now();
-        setTimeout(() => el.setAttribute('aria-pressed', 'false'), 200);
-        checkLogic('push', id);
+        setTimeout(() => { el.setAttribute('aria-pressed', 'false'); state.pushes[id] = false; }, 200);
+        checkStageProgress('push', id);
       });
     });
 
-    function isSimul(a, b) { return Math.abs((state.lastPressTimestamps[a]||0) - (state.lastPressTimestamps[b]||0)) <= 1500; }
-    
-    function setFan(type, on) {
-      state.fan[type] = on;
-      const fb = type==='blue' ? $('#fanBladeBlue') : $('#fanBladeYellow');
-      if(on){ fb.style.opacity='1'; fb.classList.add('rotate-medium'); playSound(assets.fan, 0.35, true); }
-      else { fb.style.opacity='0'; fb.classList.remove('rotate-medium'); }
-    }
+    function isSimultaneous(idA, idB) { return Math.abs((state.lastPressTimestamps[idA] || 0) - (state.lastPressTimestamps[idB] || 0)) <= 1500; }
+    function animateShake(el) { if(el) el.animate([{transform:'translateX(0)'},{transform:'translateX(-6px)'},{transform:'translateX(6px)'},{transform:'translateX(-4px)'},{transform:'translateX(0)'}], {duration:360}); }
 
-    function checkLogic(k, id) {
-      if(state.stage === 1 && k === 'push' && id === 'S1') {
-        if(state.selector.S2 !== 'left') {
-          setLED('LED4', true); setLED('LED3', false);
-          state.stage = 2; setStageDone(2);
-          updatePVal(300); updateProtectorDisplayOnPanel();
-        } else { showError(); animateShake($('#S1')); }
+    /* =========================================
+       8. منطق جامع مراحل بازی
+       ========================================= */
+    function checkStageProgress(kind, id) {
+      if(!state.gameRunning) return; // اگر بازی شروع نشده، واکنشی نده
+
+      // Stage 1 -> 2
+      if(state.stage === 1) {
+        if(kind === 'push' && id === 'S1') {
+          // شرط: سلکتور S2 نباید روی چپ باشد
+          if(state.selector.S2 && state.selector.S2 !== 'left') {
+            setLED('LED4', true); setLED('LED3', false); setLED('LED1', false);
+            state.stage = 2; setStageDone(2);
+            state.protectorValue = 300; updateProtectorDisplayOnPanel();
+          } else { showError(); animateShake(document.getElementById('S1')); }
+        }
       }
       
-      if((state.stage===3||state.stage===4) && k==='push' && (id==='S6_START'||id==='S7')) {
-        if(isSimul('S6_START','S7')){ setFan('blue', true); setStageDone(4); state.stage=4; }
-      }
-
-      if(state.stage>=4 && state.stage<6) {
-        if(k==='push' && id==='S6_STOP' && state.fan.blue) setFan('blue', false);
-        if(k==='push' && (id==='S4_START'||id==='S8')) {
-          if(isSimul('S4_START','S8')) {
-            if(!state.fan.blue) { setFan('yellow', true); setStageDone(5); state.stage=5; } else { showError(); }
+      // Stage 3 -> 4
+      else if(state.stage === 3) {
+        if(kind === 'push' && (id === 'S6_START' || id === 'S7')) {
+          if(isSimultaneous('S6_START','S7')) {
+             setFan('blue', true); setStageDone(4); state.stage = 4;
           }
         }
       }
 
-      if(state.stage === 5 && state.selector.S3!=='left' && state.selector.S5!=='left' && state.fan.yellow) {
-        if(k==='push' && (id==='S6_START'||id==='S7') && isSimul('S6_START','S7')) {
-          setFan('blue', true); setStageDone(6); state.stage=6;
+      // Stage 4 -> 5
+      else if(state.stage === 4) {
+        // خاموش کردن فن آبی با S6 Stop برای آماده سازی مرحله بعد
+        if(kind === 'push' && id === 'S6_STOP' && state.fan.blue) { 
+            setFan('blue', false); 
+        }
+        // روشن کردن فن زرد با کلید ترکیبی
+        if(kind === 'push' && (id === 'S4_START' || id === 'S8')) {
+          if(isSimultaneous('S4_START','S8')) {
+            if(!state.fan.blue) { // شرط: فن آبی باید خاموش باشه
+                setFan('yellow', true); setStageDone(5); state.stage = 5; 
+            } else { showError(); }
+          }
         }
       }
 
-      if(state.stage === 6 && state.fan.blue && state.fan.yellow && k==='push' && id==='S10') {
-        if(state.joystick === 'down') {
-          setStageDone(7); state.stage=7;
-          $('#winLight').classList.add('on');
-          clearInterval(state.gameTimerInterval);
-          setTimeout(() => alert(`تبریک ${playerData.firstName}! بازی با موفقیت انجام شد.`), 500);
-        } else { showError(); animateShake($('#S10')); }
+      // Stage 5 -> 6
+      else if(state.stage === 5) {
+        // شرط: سلکتورهای S3 و S5 چرخانده شده باشند
+        const selectorsRotated = state.selector.S3 !== 'left' && state.selector.S5 !== 'left';
+        if(selectorsRotated && state.fan.yellow) {
+          if(kind === 'push' && (id === 'S6_START' || id === 'S7')) {
+            if(isSimultaneous('S6_START','S7')) {
+              setFan('blue', true); setStageDone(6); state.stage = 6;
+            }
+          }
+        }
+      }
+
+      // Stage 6 -> 7 (پایان)
+      else if(state.stage === 6) {
+        // شرط: هر دو فن روشن باشند
+        if(state.fan.blue && state.fan.yellow) {
+          if(kind === 'push' && id === 'S10') {
+            if(state.joystick === 'down') {
+              setStageDone(7); state.stage = 7;
+              winLight.classList.add('on');
+              clearInterval(state.gameTimerInterval);
+              // پیام پیروزی
+              setTimeout(() => alert(`تبریک ${playerData.firstName || ''} عزیز! \nشما برنده شدید.\nلطفا همین الان از صفحه اسکرین‌شات بگیرید.`), 500);
+            } else { showError(); animateShake(document.getElementById('S10')); }
+          }
+        }
       }
     }
 
-    function animateShake(el) {
-      if(el) el.animate([{transform:'translateX(-6px)'},{transform:'translateX(6px)'},{transform:'translateX(0)'}], {duration:300});
-    }
+    /* =========================================
+       9. سیستم Pan & Zoom (زوم و جابجایی)
+       ========================================= */
+    function applyPanZoom(containerId, contentId, fitToScreen = false) {
+        const container = document.getElementById(containerId);
+        const content = document.getElementById(contentId);
+        if (!container || !content) return;
 
-    updateProtectorDisplayOnPanel();
+        let scale = 1;
+        let pointX = 0, pointY = 0;
+        let startX = 0, startY = 0;
+        let isDragging = false;
+
+        // تنظیم اولیه زوم برای فیت شدن
+        function fitElement() {
+            if (fitToScreen) {
+                const rectContainer = container.getBoundingClientRect();
+                const rectContent = content.getBoundingClientRect();
+                
+                // ریست کردن ترنسفرم برای محاسبه دقیق ابعاد اصلی
+                content.style.transform = 'translate(0px, 0px) scale(1)';
+                
+                const baseWidth = 1808; // عرض اصلی تصویر برد
+                const baseHeight = 592; // ارتفاع اصلی تصویر برد
+                
+                const scaleX = rectContainer.width / baseWidth;
+                const scaleY = rectContainer.height / baseHeight;
+                
+                // انتخاب اسکیل مناسب و کمی کوچک‌تر برای حاشیه امن
+                scale = Math.min(scaleX, scaleY) * 0.95;
+                
+                // وسط چین کردن
+                pointX = (rectContainer.width - baseWidth * scale) / 2;
+                pointY = (rectContainer.height - baseHeight * scale) / 2;
+                
+                updateTransform();
+            }
+        }
+
+        const updateTransform = () => {
+            content.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
+        };
+
+        // --- رویدادهای موس ---
+        container.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            isDragging = true;
+            startX = e.clientX - pointX;
+            startY = e.clientY - pointY;
+            container.style.cursor = 'grabbing';
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            pointX = e.clientX - startX;
+            pointY = e.clientY - startY;
+            updateTransform();
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+            container.style.cursor = 'grab';
+        });
+
+        container.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const xs = (e.clientX - pointX) / scale;
+            const ys = (e.clientY - pointY) / scale;
+            const delta = -e.deltaY;
+            
+            const oldScale = scale;
+            if (delta > 0) scale *= 1.1; else scale /= 1.1;
+            
+            // محدودیت زوم
+            scale = Math.min(Math.max(0.2, scale), 4);
+
+            pointX = e.clientX - xs * scale;
+            pointY = e.clientY - ys * scale;
+            updateTransform();
+        }, { passive: false });
+
+
+        // --- رویدادهای تاچ (موبایل) ---
+        let initialPinchDistance = null;
+        let initialScale = 1;
+
+        container.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                isDragging = true;
+                startX = e.touches[0].clientX - pointX;
+                startY = e.touches[0].clientY - pointY;
+            } else if (e.touches.length === 2) {
+                isDragging = false;
+                initialPinchDistance = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                initialScale = scale;
+            }
+        }, { passive: false });
+
+        container.addEventListener('touchmove', (e) => {
+            if(e.cancelable) e.preventDefault();
+
+            if (isDragging && e.touches.length === 1) {
+                pointX = e.touches[0].clientX - startX;
+                pointY = e.touches[0].clientY - startY;
+                updateTransform();
+            } else if (e.touches.length === 2 && initialPinchDistance) {
+                const currentDistance = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                const zoomFactor = currentDistance / initialPinchDistance;
+                scale = Math.min(Math.max(0.2, initialScale * zoomFactor), 4);
+                updateTransform();
+            }
+        }, { passive: false });
+
+        container.addEventListener('touchend', (e) => {
+            if (e.touches.length < 2) initialPinchDistance = null;
+            if (e.touches.length === 0) isDragging = false;
+            if (e.touches.length === 1) {
+                // سوییچ نرم به حالت درگ اگر یکی از انگشت‌ها برداشته شد
+                isDragging = true;
+                startX = e.touches[0].clientX - pointX;
+                startY = e.touches[0].clientY - pointY;
+            }
+        });
+        
+        // بازگشت تابع برای استفاده در صورت تغییر سایز پنجره
+        return fitElement;
+    }
+    
+    // لیسنر تغییر سایز پنجره برای فیت شدن مجدد
+    window.addEventListener('resize', () => {
+        if(typeof fitGameToScreen === 'function') fitGameToScreen();
+    });
+
   </script>
 </body>
 </html>
