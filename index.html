@@ -263,16 +263,28 @@
     .error-badge.show { opacity: 1; transform: translateY(0); }
 
     /* چراغ برنده شدن (سبز رنگ) */
-    .win-light {
-      left: 50%; top: 5%; width: 400px; height: 120px; border-radius: 8px;
-      background: transparent; border: 3px solid rgba(255,255,255,0.1); box-shadow: none; transition: all .3s ease; transform: translateX(-50%); pointer-events: none;
-    }
-    .win-light.on { 
+.win-light {
+      left: 50%; top: 5%; width: 80px; height: 80px; border-radius: 50%;
       background: transparent;
+      border: 3px solid rgba(255,255,255,0.1); 
+      box-shadow: none; 
+      transition: all .3s ease; 
+      transform: translateX(-50%); 
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 14px;
+      text-align: center;
+}
+.win-light.on { 
+      background: radial-gradient(circle at 30% 30%, #4ea776, #08b63c);
       border: 3px solid var(--accent); /* سبز */
       box-shadow: 0 0 20px rgba(0,255,157,0.8), 0 0 40px rgba(0,255,157,0.4), inset 0 0 15px rgba(0,255,157,0.3);
       animation: pulseGreen 1.5s ease-in-out infinite alternate;
-    }
+}
     @keyframes pulseGreen {
       from { box-shadow: 0 0 15px rgba(0,255,157,0.6), 0 0 30px rgba(0,255,157,0.3), inset 0 0 10px rgba(0,255,157,0.2); }
       to { box-shadow: 0 0 25px rgba(0,255,157,1), 0 0 50px rgba(0,255,157,0.6), inset 0 0 20px rgba(0,255,157,0.4); }
@@ -408,15 +420,17 @@
             <div class="protector-display" id="protectorDisplay">300</div>
         </div>
 
-        <!-- فن ها -->
+ <!-- فن ها -->
         <div class="fan-wrap fan-blue" id="fanBlue">
             <div class="fan-base" style="background: radial-gradient(circle at 30% 30%, #3b82f6, #1e40af); border-radius: 50%;"></div>
-            <div class="fan-blade" id="fanBladeBlue" style="background: conic-gradient(#60a5fa, #93c5fd, #60a5fa); border-radius: 50%;"></div>
+            <!-- اصلاح ID در خط زیر: باید fanBladeBlue باشد -->
+            <div class="fan-blade" id="fanBladeBlue" style="background: linear-gradient(180deg, #000000 50%, #60a5fa 50%); border-radius: 50%;"></div>
         </div>
 
         <div class="fan-wrap fan-yellow" id="fanYellow">
             <div class="fan-base" style="background: radial-gradient(circle at 30% 30%, #f59e0b, #d97706); border-radius: 50%;"></div>
-            <div class="fan-blade" id="fanBladeYellow" style="background: conic-gradient(#fbbf24, #fcd34d, #fbbf24); border-radius: 50%;"></div>
+            <!-- فن زرد -->
+            <div class="fan-blade" id="fanBladeYellow" style="background: linear-gradient(180deg, #000000 50%, #fbbf24 50%); border-radius: 50%;"></div>
         </div>
 
         <!-- تیک مراحل -->
@@ -431,7 +445,7 @@
         </div>
 
         <!-- تایمر و نقشه -->
-        <div class="game-timer" id="gameTimer">03:00</div>
+        <div class="game-timer" id="gameTimer">02:30</div>
         <div id="mapSmall" class="map-small">
             <img src="assets/map_small.png" alt="نقشه" class="map-thumbnail" onerror="this.style.display='none'; this.parentNode.innerHTML='نقشه';">
         </div>
@@ -588,8 +602,7 @@
             applyPanZoom('mapZoomContainer', 'mapLarge', false);
         }, 100);
 
-        // شروع تایمر بازی
-        startGameTimer();
+    
     });
 
 
@@ -776,6 +789,12 @@
        ========================================= */
     $('#S0').addEventListener('click', () => {
       playSound(assets.click, 0.3);
+
+      // *** تغییر ۲: شروع تایمر با اولین کلیک روی S0 ***
+      if (!state.gameRunning) {
+          startGameTimer();
+      }
+
       // شروع مرحله 1 با زدن S0
       if(state.stage === 0) { 
           state.stage = 1; 
@@ -783,7 +802,7 @@
           setLED('LED1', false); 
           setStageDone(1); 
       }
-    });
+     });
 
     ['S2','S3','S5'].forEach(id => {
       const el = document.getElementById(id);
@@ -873,7 +892,7 @@
         }
       }
 
-      // Stage 6 -> 7 (پایان)
+        // Stage 6 -> 7 (پایان)
       else if(state.stage === 6) {
         // شرط: هر دو فن روشن باشند
         if(state.fan.blue && state.fan.yellow) {
@@ -889,6 +908,8 @@
         }
       }
     }
+    
+    
 
     /* =========================================
        9. سیستم Pan & Zoom (زوم و جابجایی)
